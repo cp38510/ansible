@@ -1,0 +1,53 @@
+---
+  - name: Install apache
+    apt: name=apache2 state=present
+
+  - name: Copiando configuracion de apache
+    template:
+       src=welcome.conf
+       dest=/etc/apache2/conf.d/welcome.conf
+  - name: Nuevo index
+    template:
+       src=index.html
+       dest=/var/www/html/index.html
+  - name: Añadir info.php
+    template:
+       src=info.php
+       dest=/var/www/html/info.php
+  - name: Activar modulo de apache
+    apache2_module: state=present name=userdir
+  - name: restart apache2
+    shell: service apache2 restart
+  - name: Iniciar apache2 al inicio
+    shell: chkconfig apache2 on
+#  - name: Configurar iptables
+#    blockinfile:
+#      dest: /etc/sysconfig/iptables
+#      block: |
+#        iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+#        iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT
+#  - name: Guardando iptables
+#    shell: service iptables restart
+#  - name: Editando /etc/shorewall/rules
+#    blockinfile:
+#      dest: /etc/shorewall/rules
+#      block: |
+#        ACCEPT    all    fw    tcp    80,443
+#    notify:
+#      - restart shorewall
+  - name: Desactivando firealld
+    shell: systemctl disable firewalld
+  - name: Install mariadb
+    apt: name={{ item }} state=present
+    with_items:
+          - mariadb-server
+          - mariadb
+  - name: Install modulo python-mysqldb
+    apt: name=MySQL-python state=present
+    notify:
+      - restart mariadb
+  - name: Install php
+    apt: name=php state=present
+  - name: Install paquetes php5
+    apt: name=php-mysql
+         state=latest
